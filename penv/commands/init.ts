@@ -231,7 +231,9 @@ function mergeWtWorktreesJson(ctx: Ctx, root: string, report: DoctorReport): Age
 // events-discovery pattern, generalized: preview-env.sh → penv, and the wt glue
 // is repo-agnostic. PATH is widened because hook shells can be minimal.
 const HOOK_PATH_LINE =
-  'export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/share/mise/shims:$HOME/.bun/bin:$HOME/.local/bin"\n' +
+  '# Reach common tool + version-manager (mise OR asdf) locations in the minimal\n' +
+  '# hook environment. Missing dirs on PATH are ignored, so listing both is safe.\n' +
+  'export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims:${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$HOME/.bun/bin:$HOME/.local/bin"\n' +
   '_penv="$(command -v penv 2>/dev/null || true)"; [ -n "$_penv" ] && export PATH="$(dirname "$_penv"):$PATH"';
 
 const HOOK_SESSION = `#!/usr/bin/env bash
