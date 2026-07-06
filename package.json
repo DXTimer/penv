@@ -1,0 +1,48 @@
+{
+  "name": "penv",
+  "version": "0.1.0",
+  "description": "Collision-safe preview environments, one per git worktree: each worktree gets its own database, cache index, and ports so parallel worktrees never collide and never touch the shared dev resources.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ivan Bakalov <17004703+DXTimer@users.noreply.github.com> (https://github.com/DXTimer)",
+  "homepage": "https://github.com/DXTimer/penv#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DXTimer/penv.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DXTimer/penv/issues"
+  },
+  "keywords": [
+    "preview-environment",
+    "isolation",
+    "ports",
+    "database",
+    "redis",
+    "worktree",
+    "monorepo",
+    "claude-code",
+    "codex",
+    "bun",
+    "cli",
+    "developer-tools"
+  ],
+  "bin": {
+    "penv": "bin/penv"
+  },
+  "files": [
+    "bin",
+    "penv",
+    "samples",
+    "skills",
+    "install",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
