@@ -14,6 +14,7 @@ Built with [Bun](https://bun.sh). Pairs with its sibling [`wt`](https://github.c
 - **Idempotent & rename-safe** — ids are anchored to the worktree path, so re-provisioning is a no-op and renaming a branch never orphans an env.
 - **Self-healing schema** — a worktree applies any migrations newer than the template automatically; fold them back into the template when you like.
 - **Flush-before-release teardown** — resources are dropped/flushed *before* their slots are freed, so a reused slot can't collide with a half-torn-down one.
+- **Orphan recovery** — a worktree removed without destroying its env leaves its database and index allocated; `penv destroy --id` tears it down anyway, using the main checkout's copy of the teardown script.
 - **Repo-agnostic** — the engine never guesses your stack; five small `.preview/*.sh` scripts do, and `penv doctor` scaffolds them.
 - **Agent-ready** — `penv session` feeds a SessionStart hook so an assistant opening a worktree learns its isolated resources up front. Integrates with `wt`, Claude Code, and Codex.
 - **Scriptable** — `--json` on every command, plus primitives (`penv get port|index|name`, `penv env`) you compose from your own scripts.
@@ -74,6 +75,7 @@ penv destroy     # tear it down and release the slots
 | `penv verify` | Run `.preview/verify.sh` — reachable AND isolated. |
 | `penv down` | Stop the stack, if `.preview/down.sh` exists. |
 | `penv destroy [--force]` | Run `teardown.sh`, then release the slots. |
+| `penv destroy --id <id> [--force]` | Same, for an env whose worktree is already gone — runs the main checkout's committed `teardown.sh`. |
 | `penv status` | This worktree's allocation record. |
 | `penv session` | Emit preview context for a SessionStart hook; no-op on main. |
 | `penv list` | Every live env on this machine. |

@@ -35,16 +35,16 @@ export async function cmdGet(ctx: Ctx, kind: string, name: string, rangeSpec?: s
 
   if (kind === 'port') {
     const range = parseRange(rangeSpec, DEFAULT_PORT_RANGE);
-    const port = await getPort(id, gc.root, gc.branch, name, range);
+    const port = await getPort(id, gc.root, gc.branch, gc.commonDir, name, range);
     if (ctx.json) emit(ctx, { name, port });
     else console.log(String(port));
   } else if (kind === 'index') {
     const range = parseRange(rangeSpec, [0, 15]);
-    const idx = await getIndex(id, gc.root, gc.branch, name, range[0], range[1]);
+    const idx = await getIndex(id, gc.root, gc.branch, gc.commonDir, name, range[0], range[1]);
     if (ctx.json) emit(ctx, { name, index: idx });
     else console.log(String(idx));
   } else if (kind === 'name') {
-    const value = await getName(id, gc.root, gc.branch, name);
+    const value = await getName(id, gc.root, gc.branch, gc.commonDir, name);
     if (ctx.json) emit(ctx, { suffix: name, value });
     else console.log(value);
   } else {

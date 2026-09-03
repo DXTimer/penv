@@ -37,6 +37,16 @@ worktrees provisioning at once never collide.
 | `PENV_SEED`  | `1` when `penv up --seed` was used (provision/seed)  |
 | `PENV_NO_MIGRATE` | `1` when `--no-migrate` was used                |
 
+One case bends this: `penv destroy --id <id>` on an env whose worktree has
+already been deleted. The worktree's own `.preview/` went with it, so penv runs
+the **main checkout's** committed `teardown.sh` instead (found via the
+`common_dir` recorded at provisioning). `PENV_ROOT` still names the env's own,
+now-missing root -- teardown derives its resource names from `PENV_ID` and must
+not mistake the main checkout for its own worktree -- while `PENV_DIR` and the
+working directory point at the main checkout. A `teardown.sh` that only drops
+resources named from `PENV_ID` needs no changes for this; one that reads files
+out of `PENV_ROOT` should tolerate them being absent.
+
 The rest of the host environment passes through unchanged. Host connection
 defaults (`PGHOST`, `PGPORT`, `PGUSER`, `REDIS_HOST`, …) are repo-specific —
 read them directly, with sensible fallbacks.

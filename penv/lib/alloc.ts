@@ -12,8 +12,18 @@ import { portFree } from './net.ts';
 /** Default port band — high range to avoid clashing with common dev ports. */
 export const DEFAULT_PORT_RANGE: [number, number] = [20000, 29999];
 
-function loadOrCreate(id: string, root: string, branch: string | null): PenvRecord {
-  return readRecord(id) ?? newRecord(id, root, branch);
+function loadOrCreate(
+  id: string,
+  root: string,
+  branch: string | null,
+  commonDir: string | null,
+): PenvRecord {
+  const existing = readRecord(id);
+  if (!existing) return newRecord(id, root, branch, commonDir);
+  // Backfill on an older record so an env provisioned before common_dir
+  // existed becomes destroyable-after-removal on its next `penv up`.
+  if (!existing.common_dir && commonDir) existing.common_dir = commonDir;
+  return existing;
 }
 
 /**
@@ -25,11 +35,12 @@ export async function getPort(
   id: string,
   root: string,
   branch: string | null,
+  commonDir: string | null,
   name: string,
   range: [number, number] = DEFAULT_PORT_RANGE,
 ): Promise<number> {
   return withLock(() => {
-    const rec = loadOrCreate(id, root, branch);
+    const rec = loadOrCreate(id, root, branch, commonDir);
     const existing = rec.ports[name];
     if (existing !== undefined) return existing;
 
@@ -52,12 +63,13 @@ export async function getIndex(
   id: string,
   root: string,
   branch: string | null,
+  commonDir: string | null,
   name: string,
   min: number,
   max: number,
 ): Promise<number> {
   return withLock(() => {
-    const rec = loadOrCreate(id, root, branch);
+    const rec = loadOrCreate(id, root, branch, commonDir);
     const existing = rec.indexes[name];
     if (existing !== undefined) return existing;
 
@@ -83,10 +95,11 @@ export async function getName(
   id: string,
   root: string,
   branch: string | null,
+  commonDir: string | null,
   suffix: string,
 ): Promise<string> {
   return withLock(() => {
-    const rec = loadOrCreate(id, root, branch);
+    const rec = loadOrCreate(id, root, branch, commonDir);
     const existing = rec.names[suffix];
     if (existing !== undefined) return existing;
     const value = `${suffix}_${id}`;

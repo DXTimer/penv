@@ -13,6 +13,16 @@ export interface PenvRecord {
   workspace: string | null;
   /** Git toplevel of the worktree this env is anchored to (survives rename). */
   repo_root: string;
+  /**
+   * The shared git dir (`<main-checkout>/.git`) as of provisioning.
+   *
+   * Present so `penv destroy --id` can tear an env down after its worktree has
+   * been deleted: the worktree's `.preview/teardown.sh` went with it, but the
+   * main checkout has the same committed script. Optional -- records written
+   * before this existed degrade to releasing slots without running teardown,
+   * which is reported rather than silently assumed to be a clean destroy.
+   */
+  common_dir?: string | null;
   branch: string | null;
   /** name -> port */
   ports: Record<string, number>;
@@ -131,13 +141,19 @@ export function claimedIndexesInRange(min: number, max: number, excludeId?: stri
   return set;
 }
 
-export function newRecord(id: string, repoRoot: string, branch: string | null): PenvRecord {
+export function newRecord(
+  id: string,
+  repoRoot: string,
+  branch: string | null,
+  commonDir: string | null = null,
+): PenvRecord {
   const now = new Date().toISOString();
   return {
     id,
     workspace: null,
     repo_root: repoRoot,
     branch,
+    common_dir: commonDir,
     ports: {},
     indexes: {},
     names: {},

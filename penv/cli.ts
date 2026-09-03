@@ -19,6 +19,7 @@ Lifecycle:
   penv verify                       Run .preview/verify.sh (reachable + isolated)
   penv down                         Stop the stack (if .preview/down.sh exists)
   penv destroy [--force]            Run teardown.sh, then release slots
+  penv destroy --id <id> [--force]  Same, for an env whose worktree is gone
   penv status                       This worktree's allocation record
   penv session                      Inject preview ctx (SessionStart hook); no-op on main
   penv list                         All live envs on this machine
@@ -27,17 +28,37 @@ Setup:
   penv doctor                   Detect stack/tier/run/agents (report only)
   penv init                     Generate .preview/* + agent integration
 
-Flags: --json  --verbose/-v  --force/-f  --seed  --no-migrate  --help/-h  --version/-V`;
+Flags: --json  --verbose/-v  --force/-f  --seed  --no-migrate  --help/-h  --version/-V
+Options: --id <env-id>  (destroy only) target a recorded env instead of the cwd`;
 
 interface Parsed {
   positional: string[];
   flags: Set<string>;
+  /** Value-taking options, e.g. `--id <env-id>`. */
+  options: Map<string, string>;
 }
+
+/** Options that consume the following argument rather than being booleans. */
+const VALUE_OPTIONS = new Set(['--id']);
 
 function parse(argv: string[]): Parsed {
   const positional: string[] = [];
   const flags = new Set<string>();
-  for (const a of argv) {
+  const options = new Map<string, string>();
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]!;
+    // `--id <value>` and `--id=<value>` both work; a bare trailing `--id`
+    // falls through to positional so the command reports a usage error rather
+    // than silently swallowing the next thing.
+    const eq = a.indexOf('=');
+    if (eq > 0 && VALUE_OPTIONS.has(a.slice(0, eq))) {
+      options.set(a.slice(0, eq).slice(2), a.slice(eq + 1));
+      continue;
+    }
+    if (VALUE_OPTIONS.has(a) && i + 1 < argv.length) {
+      options.set(a.slice(2), argv[++i]!);
+      continue;
+    }
     if (a === '--json') flags.add('json');
     else if (a === '--verbose' || a === '-v') flags.add('verbose');
     else if (a === '--force' || a === '-f') flags.add('force');
@@ -47,11 +68,11 @@ function parse(argv: string[]): Parsed {
     else if (a === '--version' || a === '-V') flags.add('version');
     else positional.push(a);
   }
-  return { positional, flags };
+  return { positional, flags, options };
 }
 
 export async function main(argv: string[]): Promise<void> {
-  const { positional, flags } = parse(argv);
+  const { positional, flags, options } = parse(argv);
   const ctx: Ctx = { json: flags.has('json'), verbose: flags.has('verbose') };
   const cmd = positional[0];
 
@@ -81,7 +102,7 @@ export async function main(argv: string[]): Promise<void> {
     case 'down':
       return cmdDown(ctx);
     case 'destroy':
-      return cmdDestroy(ctx, { force: flags.has('force') });
+      return cmdDestroy(ctx, { force: flags.has('force'), id: options.get('id') });
     case 'session':
       return cmdSession(ctx);
     case 'status':
