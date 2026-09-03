@@ -135,14 +135,6 @@ export async function cmdDown(ctx: Ctx): Promise<void> {
 }
 
 /**
- * `penv destroy` — tear down this env's resources, then release its slots.
- *
- * Flush-before-release invariant: teardown.sh (which drops the DB / flushes the
- * redis index / removes the data dir) runs to completion BEFORE the ledger
- * record is removed. Removing the record frees those slots for reuse; doing it
- * after teardown guarantees a new env can't grab a slot mid-flush and get wiped.
- */
-/**
  * `penv destroy [--id <id>] [--force]` — tear down this env's resources, then
  * release its slots.
  *
@@ -169,10 +161,9 @@ export async function cmdDestroy(
 
   if (opts.id) {
     record = readRecord(opts.id);
-    if (!record) {
-      fail(ctx, `no env recorded with id "${opts.id}"`, 'UNKNOWN_ID', { id: opts.id });
-      return;
-    }
+    // fail() exits the process, so control never reaches past it — but TS needs
+    // the narrowing for `record` to be non-null below.
+    if (!record) fail(ctx, `no env recorded with id "${opts.id}"`, 'UNKNOWN_ID', { id: opts.id });
     id = record.id;
     root = record.repo_root;
     branch = record.branch;

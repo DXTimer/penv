@@ -20,9 +20,18 @@ function loadOrCreate(
 ): PenvRecord {
   const existing = readRecord(id);
   if (!existing) return newRecord(id, root, branch, commonDir);
-  // Backfill on an older record so an env provisioned before common_dir
-  // existed becomes destroyable-after-removal on its next `penv up`.
-  if (!existing.common_dir && commonDir) existing.common_dir = commonDir;
+  // Backfill on an older record so an env provisioned before common_dir existed
+  // becomes destroyable-after-removal on its next `penv up`.
+  //
+  // Persisted HERE, not left to the caller: every getter returns early without
+  // writing when its value is already recorded, which is exactly what an
+  // idempotent re-provision does for all of them. Relying on the caller's
+  // writeRecord would drop the backfill in the one case it matters most. Safe
+  // because loadOrCreate only ever runs inside withLock.
+  if (!existing.common_dir && commonDir) {
+    existing.common_dir = commonDir;
+    writeRecord(existing);
+  }
   return existing;
 }
 
